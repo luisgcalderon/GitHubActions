@@ -1,0 +1,9 @@
+# To configure this workflow:
+# 1 Setup the following secrets in your repository:
+#     - AZURE_FUNCTIONAPP_PUBLISH_PROFILE
+# 2. Change env variables for your configuration
+
+name: Deploy Python project to Azure Function App
+
+on:
+    push:
