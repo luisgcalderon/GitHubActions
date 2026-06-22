@@ -1,5 +1,10 @@
 param location string = resourceGroup().location
 
+@description('Function app runtime version. Example: 8 (for dotnet-isolated)')
+param functionAppRuntimeVersion string = '3.14'
+
+@description('Blob container used by Function app deployment storage configuration')
+param functionsDeploymentContainerName string = 'functions-deployment'
 resource FuncStorage 'Microsoft.Storage/storageAccounts@2026-04-01' = {
   name: 'dvccfuncstg'
   location: location
@@ -7,6 +12,9 @@ resource FuncStorage 'Microsoft.Storage/storageAccounts@2026-04-01' = {
   sku: {
     name: 'Standard_LRS'
   }
+}
+resource funcDepContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2026-04-01' = {
+  name: '${FuncStorage.name}/default/${functionsDeploymentContainerName}'
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2025-03-01' = {
@@ -22,24 +30,22 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2025-03-01' = {
   }
 }
 
+var functionsContainerUrl = 'https://${FuncStorage.name}.blob.${environment().suffixes.storage}/${functionsDeploymentContainerName}'
+output url string = functionsContainerUrl
 resource azureFunction 'Microsoft.Web/sites@2025-03-01' = {
   name: 'dvccfuncapp'
   location: location
   kind: 'functionapp,linux'
-  identity: {
-    type: 'SystemAssigned'
-  }
   properties: {
     serverFarmId: appServicePlan.id
     functionAppConfig: {
       deployment: {
         storage: {
           authentication: {
-            storageAccountConnectionStringName: 'AzureWebJobsStorage'
-            type: 'StorageAccountConnectionString'
+            type: 'SystemAssignedIdentity'
           }
           type: 'blobContainer'
-          value: 'dvccfuncapp'
+          value: functionsContainerUrl
         }
       }
       scaleAndConcurrency: {
@@ -48,7 +54,7 @@ resource azureFunction 'Microsoft.Web/sites@2025-03-01' = {
       }
       runtime: {
         name: 'python'
-        version: '3.14'
+        version: functionAppRuntimeVersion
       }
     }
     siteConfig: {

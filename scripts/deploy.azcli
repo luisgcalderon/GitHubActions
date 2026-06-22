@@ -1,0 +1,2 @@
+$RESGP_NAME='lgcc'
+az group create -n $RESGP_NAME -l southcentralus
