@@ -31,6 +31,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2025-03-01' = {
 }
 
 var functionsContainerUrl = 'https://${FuncStorage.name}.blob.${environment().suffixes.storage}/${functionsDeploymentContainerName}'
+var deploymentConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${FuncStorage.name};AccountKey=${FuncStorage.listKeys().keys[0].value};BlobEndpoint=${functionsContainerUrl}'
 output url string = functionsContainerUrl
 resource azureFunction 'Microsoft.Web/sites@2025-03-01' = {
   name: 'dvccfuncapp'
@@ -42,7 +43,8 @@ resource azureFunction 'Microsoft.Web/sites@2025-03-01' = {
       deployment: {
         storage: {
           authentication: {
-            type: 'SystemAssignedIdentity'
+            type: 'StorageAccountConnectionString'
+            storageAccountConnectionStringName: 'DEPLOYMENT_CONNECTION'
           }
           type: 'blobContainer'
           value: functionsContainerUrl
@@ -62,6 +64,10 @@ resource azureFunction 'Microsoft.Web/sites@2025-03-01' = {
         {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${FuncStorage.name};AccountKey=${FuncStorage.listKeys().keys[0].value}'
+        }
+        {
+          name: 'DEPLOYMENT_CONNECTION'
+          value: deploymentConnectionString
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
