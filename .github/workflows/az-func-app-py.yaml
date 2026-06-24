@@ -7,3 +7,7 @@ name: Deploy Python project to Azure Function App
 
 on:
     push:
+        branches: ["gha"]
+
+env:
+    AZURE_FUNCTIONAPP_NAME: 'y'

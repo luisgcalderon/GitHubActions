@@ -1,0 +1,5 @@
+$groups = az group list -o tsv --query "[].name"
+foreach ($group in $groups) {
+    Write-Host $group
+    az group delete -n $group --yes --no-wait
+}
